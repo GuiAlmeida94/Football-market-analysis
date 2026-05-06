@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import xgboost as xgb
 from PIL import Image
+import os
 
 # 1. Page Configuration
 st.set_page_config(page_title="Football Arbitrage Engine", layout="wide", page_icon="⚽")
@@ -20,15 +21,14 @@ st.markdown("""
 # 2. Loading Resources
 @st.cache_resource
 def load_model():
-    # Ensure final_model.pkl is uploaded to your Space
-    with open('final_model.pkl', 'rb') as f:
-        return pickle.load(f)
+    # Model is in the root directory as per your GitHub screenshot
+    model_path = 'final_model.pkl'
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as f:
+            return pickle.load(f)
+    return None
 
-# Using try-except to handle cases where the model isn't uploaded yet
-try:
-    model = load_model()
-except FileNotFoundError:
-    model = None
+model = load_model()
 
 # 3. Sidebar - Profile and Market Selection
 st.sidebar.header("👤 Player Technical Profile")
@@ -48,15 +48,16 @@ tab1, tab2, tab3 = st.tabs(["🎮 Valuation Simulator", "📊 Market Analysis", 
 # --- TAB 1: SIMULATOR ---
 with tab1:
     st.header("Transfer Arbitrage Simulator")
-    st.markdown("Use this tool to simulate the ROI of moving a player between different league tiers.")
+    st.markdown("Simulate the financial impact of transferring players across global league tiers.")
     
     if model:
         # Prediction Logic
         def get_val(w, a, m, g, ast):
-            # Feature order must match X_train: [age, minutes, goals, assists, league_weight]
+            # Feature order must match exactly your X_train columns
             features = pd.DataFrame([[a, m, g, ast, w]], 
                                     columns=['age_at_valuation', 'total_minutes', 'total_goals', 'total_assists', 'league_weight'])
-            return np.expm1(model.predict(features)[0])
+            log_pred = model.predict(features)[0]
+            return np.expm1(log_pred)
 
         val_cur = get_val(current_weight, age, minutes, goals, assists)
         val_tar = get_val(target_weight, age, minutes, goals, assists)
@@ -68,51 +69,46 @@ with tab1:
         c2.metric("Target Value", f"€ {val_tar:,.2f}")
         c3.metric("Arbitrage Potential", f"€ {diff:,.2f}", delta=f"{roi:.1f}%")
         
-        st.success(f"**Insight:** This transfer strategy projects a market value increase of **€ {diff:,.2f}** based on league tier escalation.")
+        st.success(f"**Insight:** This transfer strategy projects a market value increase of **€ {diff:,.2f}**.")
     else:
-        st.warning("Model file (final_model.pkl) not found. Please upload it to enable the simulator.")
+        st.error("Model 'final_model.pkl' not found in root directory. Please check your GitHub upload.")
 
 # --- TAB 2: MARKET ANALYSIS ---
 with tab2:
     st.header("Market Segmentation & Data Distribution")
-    st.markdown("Understanding how the global market distributes value across different player clusters.")
+    st.markdown("Visual evidence of how the global market distributes value across clusters.")
     
     col_img1, col_img2 = st.columns(2)
     
     with col_img1:
         st.subheader("Value Dispersion by Cluster")
-        # Ensure output_38_0.png is in the app folder
-        st.image("output_38_0.png", caption="Statistical dispersion of market values across player segments.")
-        st.info("Note how Cluster 3 (Superstars) presents extreme volatility compared to the Mass Market (Cluster 1).")
+        # Referencing the images folder
+        st.image("images/cluster_dispersion.png", caption="Statistical dispersion of market values.")
 
     with col_img2:
         st.subheader("Geographic Concentration")
-        # Ensure output_37_0.png is in the app folder
-        st.image("output_37_0.png", caption="Player volume by cluster across Top Leagues.")
-        st.info("The Premier League shows a disproportionate concentration of high-value assets (Clusters 0 and 3).")
+        st.image("images/league_distribution.png", caption="Player volume by cluster across Top Leagues.")
 
 # --- TAB 3: MODEL EXPLAINABILITY ---
 with tab3:
     st.header("Explainable AI (SHAP Analysis)")
-    st.markdown("Opening the 'Black Box' to understand the variables driving player valuations.")
+    st.markdown("Transparency report: Understanding the drivers behind the algorithm.")
     
     st.subheader("Global Feature Impact")
-    # Using the Summary Plot (e.g., output_57_0.png or output_58_0.png)
-    st.image("output_58_0.png", use_container_width=True, caption="SHAP Summary Plot: Directional impact of features.")
+    st.image("images/shap_summary.png", use_container_width=True, caption="SHAP Summary Plot: Feature importance and direction.")
     
     st.markdown("---")
     
     st.subheader("Individual Valuation Breakdown")
-    # Using the Waterfall Plot (e.g., output_64_1.png)
-    st.image("output_64_1.png", use_container_width=True, caption="SHAP Waterfall: How the model built the price for a specific player.")
+    st.image("images/shap_waterfall.png", use_container_width=True, caption="SHAP Waterfall: Itemized receipt for a specific valuation.")
     
     st.write("""
-    **Key Takeaways:**
-    * **League Weight:** The most dominant factor in player valuation.
-    * **Age Decay:** Clearly visible negative impact on market value as players cross the 28-30 year threshold.
-    * **Minutes Played:** Acts as a validation gate; high technical performance without minutes is heavily penalized.
+    **Analytical Findings:**
+    * **League Weight:** Primary driver of high valuations in the modern market.
+    * **Age Decay:** Significant negative pressure as players exceed peak physical years.
+    * **Engagement:** Minutes and games act as a reliability multiplier for technical stats.
     """)
 
 # 5. Footer
 st.divider()
-st.caption("Developed by Guilherme Oyakawa de Almeida | Data-Driven Football Analytics")
+st.caption("Developed by Guilherme Oyakawa de Almeida | Football Data Analytics Portfolio")
