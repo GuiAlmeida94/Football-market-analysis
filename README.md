@@ -21,6 +21,21 @@ This project represents a comprehensive end-to-end analytical solution designed 
 
 ---
 
+## 🛠️ Data Engineering Layer (SQL)
+### From Raw Data to Master Analytical Dataset
+
+The strength of this project lies in its robust data pipeline. Before any Machine Learning was applied, I engineered a specialized SQL environment to handle **300,000+ rows** of historical football data, ensuring consistency and performance.
+
+#### Data Transformation Strategy:
+1.  **Base Layer (Staging):** I created standardized views for players, clubs, games, and valuations, filtering historical data (post-2010) and correcting data types.
+2.  **Temporal Anchoring:** Developed a `season_year` logic to correctly join player performance with their specific market valuation at that point in time.
+3.  **Aggregated Performance:** Engineered complex Common Table Expressions (CTEs) to calculate `games_as_starter`, `clean_sheets`, and `leadership_metrics` (captaincy) on a per-season basis.
+4.  **Final Master View:** A unified dataset optimized for Python injection, containing all technical, biographic, and geographic features.
+
+All queries are optimized with `DROP VIEW IF EXISTS` and `CASCADE` protocols to ensure a clean replication of the database environment in any PostgreSQL instance.
+
+---
+
 ## 🚀 The Analytical Pipeline
 
 ### 1. Data Engineering & SQL Layer
