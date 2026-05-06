@@ -115,7 +115,7 @@ with tab3:
     """)
     
     st.subheader("Model Performance Comparison")
-    img3 = load_image('final_model_r2_comparison.png') # Certifique-se que o nome do arquivo bate!
+    img3 = load_image('final_model_R2_comparison_cluster.png') # Certifique-se que o nome do arquivo bate!
     if img3: st.image(img3, use_container_width=True)
     else: st.info("Placeholder: Insert R2/MAE comparison chart here.")
 
