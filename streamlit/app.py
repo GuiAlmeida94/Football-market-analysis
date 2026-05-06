@@ -43,7 +43,7 @@ def load_model():
 model = load_model()
 
 # 3. Header Section
-st.title("⚽ Capstone Project: Football Market Valuation Engine")
+st.title("⚽ Capstone Project: Football Market Valuation")
 st.markdown("**A Data-Driven Approach to Player Pricing and Market Arbitrage**")
 st.markdown("Developed by **Guilherme Oyakawa de Almeida**")
 
