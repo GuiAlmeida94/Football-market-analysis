@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import xgboost as xgb
 import os
+from PIL import Image
 
 # 1. Page Configuration
 st.set_page_config(page_title="Football Arbitrage Engine", layout="wide", page_icon="⚽")
@@ -16,10 +17,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Loading Resources with Error Handling
+# 2. Dynamic Path Resolution (Bulletproof for Streamlit Cloud)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 @st.cache_resource
 def load_model():
-    model_path = 'final_model.pkl'
+    model_path = os.path.join(BASE_DIR, 'final_model.pkl')
     if os.path.exists(model_path):
         with open(model_path, 'rb') as f:
             return pickle.load(f)
@@ -48,7 +51,6 @@ with tab1:
     st.markdown("Simulate the financial impact of transferring players across global league tiers.")
     
     if model:
-        # THE FIX: Robust Prediction Logic
         def get_val(w, a, m, g, ast):
             # 1. Extract exact feature names expected by the trained XGBoost model
             expected_features = model.get_booster().feature_names
@@ -77,7 +79,7 @@ with tab1:
         val_tar = get_val(target_weight, age, minutes, goals, assists)
         diff = val_tar - val_cur
         
-        # Protecting against division by zero just in case
+        # Protecting against division by zero
         roi = ((diff / val_cur) * 100) if val_cur > 0 else 0
 
         c1, c2, c3 = st.columns(3)
@@ -96,33 +98,40 @@ with tab2:
     
     with col_img1:
         st.subheader("Value Dispersion by Cluster")
-        # Displaying image with robust error handling
-        try:
-            st.image("images/cluster_dispersion.png")
-        except FileNotFoundError:
-            st.warning("Image 'images/cluster_dispersion.png' not found.")
+        img_path_1 = os.path.join(BASE_DIR, 'images', 'market_dispersion_clusters.png')
+        if os.path.exists(img_path_1):
+            st.image(Image.open(img_path_1))
+        else:
+            st.warning("Image 'market_dispersion_clusters.png' not found.")
 
     with col_img2:
         st.subheader("Geographic Concentration")
-        try:
-            st.image("images/league_distribution.png")
-        except FileNotFoundError:
-            st.warning("Image 'images/league_distribution.png' not found.")
+        img_path_2 = os.path.join(BASE_DIR, 'images', 'Market_dispersion_leagues.png')
+        if os.path.exists(img_path_2):
+            st.image(Image.open(img_path_2))
+        else:
+            st.warning("Image 'Market_dispersion_leagues.png' not found.")
 
 # --- TAB 3: MODEL EXPLAINABILITY ---
 with tab3:
     st.header("Explainable AI (SHAP Analysis)")
     
     st.subheader("Global Feature Impact")
-    try:
-        st.image("images/shap_summary.png", use_container_width=True)
-    except FileNotFoundError:
-        st.warning("Image 'images/shap_summary.png' not found.")
+    img_path_3 = os.path.join(BASE_DIR, 'images', 'SHAP_Summary.png')
+    if os.path.exists(img_path_3):
+        st.image(Image.open(img_path_3), use_container_width=True)
+    else:
+        st.warning("Image 'SHAP_Summary.png' not found.")
     
     st.markdown("---")
     
     st.subheader("Individual Valuation Breakdown")
-    try:
-        st.image("images/shap_waterfall.png", use_container_width=True)
-    except FileNotFoundError:
-        st.warning("Image 'images/shap_waterfall.png' not found.")
+    img_path_4 = os.path.join(BASE_DIR, 'images', 'SHAP_Waterfall_plot.png')
+    if os.path.exists(img_path_4):
+        st.image(Image.open(img_path_4), use_container_width=True)
+    else:
+        st.warning("Image 'SHAP_Waterfall_plot.png' not found.")
+
+# 5. Footer
+st.divider()
+st.caption("Developed by Guilherme Oyakawa de Almeida | Football Data Analytics Portfolio")
