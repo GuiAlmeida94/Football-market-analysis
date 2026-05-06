@@ -8,4 +8,4 @@
 │   ├── vw_competitions_base.sql
 │   └── ... (Other sql files)
 │
-└── 📜 02_final_master_data.sql 
+└── 📜 vw_master_data.sql 
