@@ -1,5 +1,9 @@
 import streamlit as st
 import os
+import pandas as pd
+import numpy as np
+import pickle
+import xgboost as xgb
 from PIL import Image
 
 # 1. Page Configuration
@@ -19,7 +23,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Path Handling for Images
+# 2. Path Handling & Resource Loading
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_image(filename):
@@ -27,6 +31,16 @@ def load_image(filename):
     if os.path.exists(img_path):
         return Image.open(img_path)
     return None
+
+@st.cache_resource
+def load_model():
+    model_path = os.path.join(BASE_DIR, 'final_model.pkl')
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as f:
+            return pickle.load(f)
+    return None
+
+model = load_model()
 
 # 3. Header Section
 st.title("⚽ Capstone Project: Football Market Valuation Engine")
@@ -45,11 +59,12 @@ st.markdown("""
 st.markdown("</div>", unsafe_allow_html=True)
 
 # 5. Main Navigation (Tabs for logical flow)
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "1️⃣ Data Engineering", 
     "2️⃣ Market Segmentation", 
     "3️⃣ Predictive Modeling", 
-    "4️⃣ Explainable AI (SHAP)"
+    "4️⃣ Explainable AI (SHAP)",
+    "5️⃣ Arbitrage Simulator"
 ])
 
 # --- TAB 1: DATA ENGINEERING ---
@@ -115,7 +130,7 @@ with tab3:
     """)
     
     st.subheader("Model Performance Comparison")
-    img3 = load_image('model_R2_comparison_cluster.png') # Certifique-se que o nome do arquivo bate!
+    img3 = load_image('model_R2_comparison_cluster.png')
     if img3: st.image(img3, use_container_width=True)
     else: st.info("Placeholder: Insert R2/MAE comparison chart here.")
 
@@ -151,6 +166,54 @@ with tab4:
     2. **The Age Cliff:** The model strictly penalizes market value as players cross the 28-30 age threshold, regardless of current performance.
     3. **Minutes as a Gatekeeper:** High goal-scoring rates are heavily discounted if the player lacks sustained minutes on the pitch.
     """)
+
+# --- TAB 5: ARBITRAGE SIMULATOR ---
+with tab5:
+    st.header("5. Transfer Arbitrage Simulator")
+    st.markdown("""
+    **Practical Application:** This tool deploys the trained XGBoost model to simulate **Market Arbitrage**. 
+    It calculates the financial impact of transferring a player from a lower-tier league to an Elite environment, assuming their technical output translates proportionally.
+    """)
+    
+    if model:
+        col_in1, col_in2 = st.columns(2)
+        with col_in1:
+            st.subheader("📊 Technical Profile")
+            s_age = st.slider("Age", 16, 40, 24)
+            s_mins = st.number_input("Total Minutes", 0, 3500, 1500)
+            s_goals = st.number_input("Goals", 0, 50, 5)
+            s_asts = st.number_input("Assists", 0, 30, 3)
+        
+        with col_in2:
+            st.subheader("🌍 Market Strategy")
+            cur_w = st.selectbox("Current League Level (1=Minor, 5=Elite)", [1, 2, 3, 4, 5], index=1)
+            tar_w = st.selectbox("Target League Level (1=Minor, 5=Elite)", [1, 2, 3, 4, 5], index=4)
+
+        # Bruce's Note: Predictive execution using expected features
+        def predict_val(w, a, m, g, ast):
+            features = model.get_booster().feature_names
+            input_df = pd.DataFrame(0, index=[0], columns=features)
+            
+            if 'age_at_valuation' in input_df.columns: input_df['age_at_valuation'] = a
+            if 'total_minutes' in input_df.columns: input_df['total_minutes'] = m
+            if 'total_goals' in input_df.columns: input_df['total_goals'] = g
+            if 'total_assists' in input_df.columns: input_df['total_assists'] = ast
+            if 'league_weight' in input_df.columns: input_df['league_weight'] = w
+            
+            return np.expm1(model.predict(input_df)[0])
+
+        val_cur = predict_val(cur_w, s_age, s_mins, s_goals, s_asts)
+        val_tar = predict_val(tar_w, s_age, s_mins, s_goals, s_asts)
+        diff = val_tar - val_cur
+        roi = (diff / val_cur * 100) if val_cur > 0 else 0
+
+        st.divider()
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Current Estimated Value", f"€ {val_cur:,.2f}")
+        m2.metric("Target League Value", f"€ {val_tar:,.2f}")
+        m3.metric("Arbitrage Potential", f"€ {diff:,.2f}", delta=f"{roi:.1f}%")
+    else:
+        st.error("⚠️ Model 'final_model.pkl' not found. Please upload it to enable predictions.")
 
 # 6. Footer
 st.divider()
