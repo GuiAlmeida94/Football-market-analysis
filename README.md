@@ -69,3 +69,4 @@ We open the "black box" to show how features like `league_weight`, `age`, and `m
 *   Brazilian/Portuguese Citizen based in Europe.
 *   Focus: Data Analyst | Business Intelligence Analyst | Football Analytics.
 *   [LinkedIn Profile](https://www.linkedin.com/in/guilherme-oyakawa-almeida/)
+*   [Personal Website](https://www.guilhermeoyakawa.com.br/)
