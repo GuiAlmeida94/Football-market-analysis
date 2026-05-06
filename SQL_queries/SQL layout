@@ -1,0 +1,11 @@
+📁 sql_queries
+│
+├── 📁 01_base_views          
+│   ├── vw_players_base.sql
+│   ├── vw_clubs_base.sql
+│   ├── vw_games_base.sql
+│   ├── vw_appearances_base.sql
+│   ├── vw_competitions_base.sql
+│   └── ... (Other sql files)
+│
+└── 📜 02_final_master_data.sql 
