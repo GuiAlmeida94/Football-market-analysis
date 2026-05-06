@@ -3,4 +3,3 @@ pandas
 numpy
 xgboost
 scikit-learn
-pillow
