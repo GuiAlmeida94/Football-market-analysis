@@ -42,44 +42,61 @@ st.sidebar.header("🌍 Market Selection")
 current_weight = st.sidebar.selectbox("Current League Level", [1, 2, 3, 4, 5], index=1)
 target_weight = st.sidebar.selectbox("Target League Level", [1, 2, 3, 4, 5], index=4)
 
-# 4. Main Layout with Tabs
-tab1, tab2, tab3 = st.tabs(["🎮 Valuation Simulator", "📊 Market Analysis", "🔍 Model Explainability"])
+# 4. Main Layout with 4 Tabs now
+tab1, tab2, tab3, tab4 = st.tabs(["📋 Executive Overview", "🎮 Valuation Simulator", "📊 Market Analysis", "🔍 Model Explainability"])
 
-# --- TAB 1: SIMULATOR ---
+# --- TAB 1: EXECUTIVE OVERVIEW (NEW) ---
 with tab1:
+    st.header("Project Purpose & Methodology")
+    st.markdown("""
+    Welcome to the **Football Market Valuation & Arbitrage Engine**. 
+    
+    This platform was developed to solve a critical business problem in modern football: **Valuation Subjectivity**. By leveraging advanced Data Engineering and Machine Learning, this tool provides an objective, data-driven framework to price players and identify lucrative transfer arbitrage opportunities across global leagues.
+    """)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.subheader("🛠️ The Analytical Pipeline")
+        st.markdown("""
+        * **Data Engineering (SQL):** Aggregated and cleaned over **300,000+ historical records** (2008-2026) using complex PostgreSQL views to ensure data integrity.
+        * **Market Segmentation (Clustering):** Applied K-Means to divide the global market into distinct financial tiers (e.g., Mass Market, Veterans, Superstars), recognizing that a £100M player is priced differently than a £1M prospect.
+        * **Predictive Engine (XGBoost/Ridge):** Trained specialized regression models for each cluster, utilizing Log-Scaling to handle extreme market volatility.
+        * **Explainable AI (SHAP):** Integrated Game Theory algorithms to break down the "black box" of Machine Learning, ensuring every valuation can be explained to sporting directors.
+        """)
+        
+    with col_b:
+        st.subheader("💼 About the Author")
+        st.markdown("""
+        **Guilherme Oyakawa de Almeida**  
+        *Data Analyst | Business Intelligence | Football Analytics*
+        
+        Holding dual citizenship (Brazilian/Portuguese) and actively focused on the European market, Guilherme bridges the gap between raw data and executive decision-making. His technical stack includes Python, SQL, Power BI, and Tableau, with a pragmatic approach to solving complex business problems.
+        """)
+    
+    st.info("👉 **Navigate to the 'Valuation Simulator' tab above to test the predictive model in real-time.**")
+
+# --- TAB 2: SIMULATOR ---
+with tab2:
     st.header("Transfer Arbitrage Simulator")
     st.markdown("Simulate the financial impact of transferring players across global league tiers.")
     
     if model:
         def get_val(w, a, m, g, ast):
-            # 1. Extract exact feature names expected by the trained XGBoost model
             expected_features = model.get_booster().feature_names
-            
-            # 2. Create a blank DataFrame with zeros for ALL expected features
             input_df = pd.DataFrame(0, index=[0], columns=expected_features)
             
-            # 3. Update only the core numerical features we are simulating
-            if 'age_at_valuation' in input_df.columns:
-                input_df['age_at_valuation'] = a
-            if 'total_minutes' in input_df.columns:
-                input_df['total_minutes'] = m
-            if 'total_goals' in input_df.columns:
-                input_df['total_goals'] = g
-            if 'total_assists' in input_df.columns:
-                input_df['total_assists'] = ast
-            if 'league_weight' in input_df.columns:
-                input_df['league_weight'] = w
+            if 'age_at_valuation' in input_df.columns: input_df['age_at_valuation'] = a
+            if 'total_minutes' in input_df.columns: input_df['total_minutes'] = m
+            if 'total_goals' in input_df.columns: input_df['total_goals'] = g
+            if 'total_assists' in input_df.columns: input_df['total_assists'] = ast
+            if 'league_weight' in input_df.columns: input_df['league_weight'] = w
                 
-            # 4. Predict using the fully constructed row
             log_pred = model.predict(input_df)[0]
             return np.expm1(log_pred)
 
-        # Calculating values
         val_cur = get_val(current_weight, age, minutes, goals, assists)
         val_tar = get_val(target_weight, age, minutes, goals, assists)
         diff = val_tar - val_cur
-        
-        # Protecting against division by zero
         roi = ((diff / val_cur) * 100) if val_cur > 0 else 0
 
         c1, c2, c3 = st.columns(3)
@@ -91,46 +108,38 @@ with tab1:
     else:
         st.error("⚠️ Model file 'final_model.pkl' not found. Please ensure it is uploaded to the repository.")
 
-# --- TAB 2: MARKET ANALYSIS ---
-with tab2:
+# --- TAB 3: MARKET ANALYSIS ---
+with tab3:
     st.header("Market Segmentation & Data Distribution")
     col_img1, col_img2 = st.columns(2)
     
     with col_img1:
         st.subheader("Value Dispersion by Cluster")
         img_path_1 = os.path.join(BASE_DIR, 'images', 'market_dispersion_clusters.png')
-        if os.path.exists(img_path_1):
-            st.image(Image.open(img_path_1))
-        else:
-            st.warning("Image 'market_dispersion_clusters.png' not found.")
+        if os.path.exists(img_path_1): st.image(Image.open(img_path_1))
+        else: st.warning("Image 'market_dispersion_clusters.png' not found.")
 
     with col_img2:
         st.subheader("Geographic Concentration")
         img_path_2 = os.path.join(BASE_DIR, 'images', 'Market_dispersion_leagues.png')
-        if os.path.exists(img_path_2):
-            st.image(Image.open(img_path_2))
-        else:
-            st.warning("Image 'Market_dispersion_leagues.png' not found.")
+        if os.path.exists(img_path_2): st.image(Image.open(img_path_2))
+        else: st.warning("Image 'Market_dispersion_leagues.png' not found.")
 
-# --- TAB 3: MODEL EXPLAINABILITY ---
-with tab3:
+# --- TAB 4: MODEL EXPLAINABILITY ---
+with tab4:
     st.header("Explainable AI (SHAP Analysis)")
     
     st.subheader("Global Feature Impact")
     img_path_3 = os.path.join(BASE_DIR, 'images', 'SHAP_Summary.png')
-    if os.path.exists(img_path_3):
-        st.image(Image.open(img_path_3), use_container_width=True)
-    else:
-        st.warning("Image 'SHAP_Summary.png' not found.")
+    if os.path.exists(img_path_3): st.image(Image.open(img_path_3), use_container_width=True)
+    else: st.warning("Image 'SHAP_Summary.png' not found.")
     
     st.markdown("---")
     
     st.subheader("Individual Valuation Breakdown")
     img_path_4 = os.path.join(BASE_DIR, 'images', 'SHAP_Waterfall_plot.png')
-    if os.path.exists(img_path_4):
-        st.image(Image.open(img_path_4), use_container_width=True)
-    else:
-        st.warning("Image 'SHAP_Waterfall_plot.png' not found.")
+    if os.path.exists(img_path_4): st.image(Image.open(img_path_4), use_container_width=True)
+    else: st.warning("Image 'SHAP_Waterfall_plot.png' not found.")
 
 # 5. Footer
 st.divider()
